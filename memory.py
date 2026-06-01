@@ -13,6 +13,15 @@ def init_db():
     )
     """)
 
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS conversation_history (
+        id SERIAL PRIMARY KEY,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+    )
+    """)
+
     conn.commit()
 
     cur.close()
@@ -55,3 +64,47 @@ def get_memory(key):
         return row[0]
 
     return None
+
+
+def save_message(role, content):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    INSERT INTO conversation_history(role, content)
+    VALUES (%s, %s)
+    """, (role, content))
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+
+def get_recent_messages(limit=20):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT role, content
+    FROM conversation_history
+    ORDER BY id DESC
+    LIMIT %s
+    """, (limit,))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    rows.reverse()
+
+    messages = []
+
+    for role, content in rows:
+        messages.append({
+            "role": role,
+            "content": content
+        })
+
+    return messages
