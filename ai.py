@@ -6,7 +6,8 @@ from config import (
 )
 
 from memory import (
-    get_recent_messages
+    get_recent_messages,
+    get_summary
 )
 
 client = OpenAI(
@@ -17,15 +18,18 @@ client = OpenAI(
 
 def chat_with_ai(message: str):
 
-    history = get_recent_messages(20)
+    history = get_recent_messages(100)
+
+    summary = get_summary()
 
     messages = [
         {
             "role": "system",
             "content": (
-                "Kamu adalah asisten pribadi owner. "
-                "Jawab singkat, jelas, to the point. "
-                "Ingat konteks percakapan sebelumnya."
+                "Kamu adalah asisten pribadi owner.\n"
+                "Jawab singkat, jelas, dan to the point.\n"
+                "Anggap owner adalah pengguna utama yang harus kamu bantu.\n\n"
+                f"PROJECT SUMMARY:\n{summary}"
             )
         }
     ]
