@@ -1,7 +1,19 @@
 from ai import chat_with_ai
 
-print("Testing Mimo...")
+print("STEP 1")
 
-reply = chat_with_ai("Halo")
+try:
 
-print(reply)
+    print("STEP 2")
+
+    reply = chat_with_ai("Halo")
+
+    print("STEP 3")
+
+    print(reply)
+
+except Exception as e:
+
+    print("ERROR:")
+
+    print(str(e))
