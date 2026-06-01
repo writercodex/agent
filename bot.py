@@ -1,17 +1,28 @@
-from memory import init_db, save_memory, get_memory
+from telegram import Update
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes
+)
 
-print("STEP 1")
+from config import TELEGRAM_TOKEN
 
-init_db()
 
-print("STEP 2")
+async def ping(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    await update.message.reply_text("pong")
 
-save_memory("owner_name", "Jhon")
 
-print("STEP 3")
+app = Application.builder().token(
+    TELEGRAM_TOKEN
+).build()
 
-name = get_memory("owner_name")
+app.add_handler(
+    CommandHandler("ping", ping)
+)
 
-print(f"RESULT = {name}")
+print("Telegram bot running...")
 
-print("STEP 4")
+app.run_polling()
