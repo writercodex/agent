@@ -1,13 +1,17 @@
+from memory import init_db, save_memory, get_memory
+
 print("STEP 1")
-
-from memory import init_db, save_memory
-
-print("STEP 2")
 
 init_db()
 
-print("STEP 3")
+print("STEP 2")
 
 save_memory("owner_name", "Jhon")
+
+print("STEP 3")
+
+name = get_memory("owner_name")
+
+print(f"RESULT = {name}")
 
 print("STEP 4")
