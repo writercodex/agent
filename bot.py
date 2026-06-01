@@ -1,9 +1,7 @@
-from database import get_connection
+from memory import init_db
 
-print("Testing database connection...")
+print("Creating memory table...")
 
-conn = get_connection()
+init_db()
 
-print("Database connected!")
-
-conn.close()
+print("Memory table ready!")
