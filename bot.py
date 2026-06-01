@@ -1,13 +1,9 @@
 print("STEP 1")
 
-from database import get_connection
+from memory import init_db
 
 print("STEP 2")
 
-conn = get_connection()
+init_db()
 
 print("STEP 3")
-
-conn.close()
-
-print("STEP 4")
