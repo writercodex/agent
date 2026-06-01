@@ -8,6 +8,12 @@ from telegram.ext import (
 )
 
 from config import TELEGRAM_TOKEN, OWNER_ID
+
+from memory import (
+    init_db,
+    save_message
+)
+
 from ai import chat_with_ai
 
 
@@ -30,10 +36,26 @@ async def chat(
 
     user_message = update.message.text
 
-    reply = chat_with_ai(user_message)
+    save_message(
+        "user",
+        user_message
+    )
 
-    await update.message.reply_text(reply)
+    reply = chat_with_ai(
+        user_message
+    )
 
+    save_message(
+        "assistant",
+        reply
+    )
+
+    await update.message.reply_text(
+        reply
+    )
+
+
+init_db()
 
 app = Application.builder().token(
     TELEGRAM_TOKEN
