@@ -71,7 +71,15 @@ def chat_with_ai(message: str):
 def chat_with_image(
     base64_image: str,
     mime_type: str = "image/jpeg",
-    prompt: str = "Jelaskan isi gambar ini."
+    prompt: str = (
+        "Analisa gambar secara singkat dan to the point. "
+        "Fokus pada informasi penting saja. "
+        "Jika ada error, langsung sebutkan error dan penyebab yang paling mungkin. "
+        "Jika gambar berupa dashboard, langsung simpulkan statusnya. "
+        "Jika gambar berupa kode atau log, fokus ke bug atau masalahnya. "
+        "Jangan menjelaskan seluruh isi gambar satu per satu. "
+        "Jawab maksimal 5 kalimat."
+    )
 ):
 
     messages = build_context()
