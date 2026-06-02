@@ -8,7 +8,8 @@ from config import (
 from memory import (
     get_recent_messages,
     get_summary,
-    get_memory
+    get_memory,
+    save_summary
 )
 
 client = OpenAI(
@@ -58,3 +59,33 @@ def chat_with_ai(message: str):
     )
 
     return response.choices[0].message.content
+
+
+def update_project_summary():
+
+    history = get_recent_messages(100)
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Buat ringkasan project dari percakapan berikut. "
+                "Fokus pada tujuan project, progress yang sudah selesai, "
+                "keputusan penting, dan task yang belum selesai. "
+                "Tulis ringkas dan terstruktur."
+            )
+        }
+    ]
+
+    messages.extend(history)
+
+    response = client.chat.completions.create(
+        model="mimo-v2.5-pro",
+        messages=messages
+    )
+
+    summary = response.choices[0].message.content
+
+    save_summary(summary)
+
+    return summary
