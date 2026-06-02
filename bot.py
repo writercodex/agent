@@ -7,6 +7,8 @@ from telegram.ext import (
     filters
 )
 
+import base64
+
 from config import TELEGRAM_TOKEN, OWNER_ID
 
 from memory import (
@@ -19,6 +21,7 @@ from memory import (
 
 from ai import (
     chat_with_ai,
+    chat_with_image,
     update_project_summary
 )
 
@@ -125,6 +128,49 @@ async def updatesummary(
     )
 
 
+async def photo_handler(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    if update.effective_user.id != OWNER_ID:
+        return
+
+    await update.message.reply_text(
+        "Menganalisa gambar..."
+    )
+
+    photo = update.message.photo[-1]
+
+    file = await context.bot.get_file(
+        photo.file_id
+    )
+
+    image_bytes = await file.download_as_bytearray()
+
+    base64_image = base64.b64encode(
+        image_bytes
+    ).decode("utf-8")
+
+    reply = chat_with_image(
+        base64_image=base64_image,
+        mime_type="image/jpeg"
+    )
+
+    save_message(
+        "user",
+        "[IMAGE]"
+    )
+
+    save_message(
+        "assistant",
+        reply
+    )
+
+    await update.message.reply_text(
+        reply
+    )
+
+
 async def chat(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
@@ -188,6 +234,13 @@ app.add_handler(
 
 app.add_handler(
     CommandHandler("updatesummary", updatesummary)
+)
+
+app.add_handler(
+    MessageHandler(
+        filters.PHOTO,
+        photo_handler
+    )
 )
 
 app.add_handler(
