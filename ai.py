@@ -13,7 +13,7 @@ from memory import (
     save_summary
 )
 
-from search import web_search
+from tools.search import web_search
 
 client = OpenAI(
     api_key=MIMO_API_KEY,
