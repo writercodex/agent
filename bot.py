@@ -87,4 +87,49 @@ async def chat(
     user_message = update.message.text
 
     save_message(
-        "user
+        "user",
+        user_message
+    )
+
+    reply = chat_with_ai(
+        user_message
+    )
+
+    save_message(
+        "assistant",
+        reply
+    )
+
+    await update.message.reply_text(
+        reply
+    )
+
+
+init_db()
+
+app = Application.builder().token(
+    TELEGRAM_TOKEN
+).build()
+
+app.add_handler(
+    CommandHandler("ping", ping)
+)
+
+app.add_handler(
+    CommandHandler("setproject", setproject)
+)
+
+app.add_handler(
+    CommandHandler("project", project)
+)
+
+app.add_handler(
+    MessageHandler(
+        filters.TEXT & ~filters.COMMAND,
+        chat
+    )
+)
+
+print("Telegram bot running...")
+
+app.run_polling()
