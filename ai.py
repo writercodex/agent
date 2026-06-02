@@ -9,6 +9,7 @@ from memory import (
     get_recent_messages,
     get_summary,
     get_memory,
+    get_all_memories,
     save_summary
 )
 
@@ -23,6 +24,13 @@ def build_context():
     history = get_recent_messages(100)
 
     summary = get_summary()
+
+    memories = get_all_memories()
+
+    memory_text = ""
+
+    for key, value in memories:
+        memory_text += f"{key}: {value}\n"
 
     project_memory = get_memory(
         "project_memory"
@@ -45,6 +53,7 @@ def build_context():
                 "Jangan gunakan bullet point kecuali diminta.\n"
                 "Jangan membuat laporan panjang kecuali diminta.\n"
                 "Anggap owner adalah pengguna utama yang harus kamu bantu.\n\n"
+                f"OWNER MEMORY:\n{memory_text}\n\n"
                 f"PROJECT MEMORY:\n{project_memory}\n\n"
                 f"PROJECT SUMMARY:\n{summary}"
             )
