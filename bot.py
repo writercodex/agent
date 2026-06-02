@@ -13,7 +13,8 @@ from memory import (
     init_db,
     save_message,
     save_memory,
-    get_memory
+    get_memory,
+    get_summary
 )
 
 from ai import chat_with_ai
@@ -77,6 +78,30 @@ async def project(
     )
 
 
+async def memory(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    if update.effective_user.id != OWNER_ID:
+        return
+
+    project_text = get_memory(
+        "project_memory"
+    )
+
+    if not project_text:
+        project_text = "Belum ada project memory."
+
+    summary = get_summary()
+
+    if not summary:
+        summary = "Belum ada summary."
+
+    await update.message.reply_text(
+        f"PROJECT MEMORY:\n\n{project_text}\n\nSUMMARY:\n\n{summary}"
+    )
+
+
 async def chat(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
@@ -121,6 +146,10 @@ app.add_handler(
 
 app.add_handler(
     CommandHandler("project", project)
+)
+
+app.add_handler(
+    CommandHandler("memory", memory)
 )
 
 app.add_handler(
