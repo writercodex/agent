@@ -17,7 +17,9 @@ from memory import (
     init_db,
     save_message,
     save_memory,
+    delete_memory,
     get_memory,
+    get_all_memories,
     get_summary
 )
 
@@ -109,6 +111,53 @@ async def memory(
 
     await update.message.reply_text(
         f"PROJECT MEMORY:\n\n{project_text}\n\nSUMMARY:\n\n{summary}"
+    )
+
+
+async def memories(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    if update.effective_user.id != OWNER_ID:
+        return
+
+    rows = get_all_memories()
+
+    if not rows:
+        await update.message.reply_text(
+            "Belum ada memory."
+        )
+        return
+
+    text = ""
+
+    for key, value in rows:
+        text += f"{key}\n{value}\n\n"
+
+    await update.message.reply_text(
+        text[:4000]
+    )
+
+
+async def forget(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    if update.effective_user.id != OWNER_ID:
+        return
+
+    if len(context.args) < 1:
+        await update.message.reply_text(
+            "Format: /forget memory_key"
+        )
+        return
+
+    key = context.args[0]
+
+    delete_memory(key)
+
+    await update.message.reply_text(
+        f"Memory {key} dihapus."
     )
 
 
@@ -264,6 +313,14 @@ app.add_handler(
 
 app.add_handler(
     CommandHandler("memory", memory)
+)
+
+app.add_handler(
+    CommandHandler("memories", memories)
+)
+
+app.add_handler(
+    CommandHandler("forget", forget)
 )
 
 app.add_handler(
