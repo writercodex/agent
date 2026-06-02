@@ -13,6 +13,8 @@ from memory import (
     save_summary
 )
 
+from search import web_search
+
 client = OpenAI(
     api_key=MIMO_API_KEY,
     base_url=MIMO_BASE_URL
@@ -68,6 +70,53 @@ def build_context():
 def chat_with_ai(message: str):
 
     messages = build_context()
+
+    lower_message = message.lower()
+
+    search_triggers = [
+        "search ",
+        "cari ",
+        "google ",
+        "berita "
+    ]
+
+    should_search = False
+
+    for trigger in search_triggers:
+        if lower_message.startswith(trigger):
+            should_search = True
+            break
+
+    if should_search:
+
+        try:
+
+            search_result = web_search(
+                message,
+                max_results=5
+            )
+
+            messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        "Gunakan hasil pencarian berikut "
+                        "untuk menjawab pertanyaan owner.\n\n"
+                        f"{search_result}"
+                    )
+                }
+            )
+
+        except Exception as e:
+
+            messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        f"Search error: {e}"
+                    )
+                }
+            )
 
     messages.append(
         {
