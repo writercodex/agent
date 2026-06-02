@@ -37,11 +37,14 @@ def build_context():
             "content": (
                 "Kamu adalah asisten pribadi owner.\n"
                 "Jawab singkat, jelas, natural, dan to the point.\n"
-                "Anggap owner adalah pengguna utama yang harus kamu bantu.\n"
-                "Jangan menggunakan markdown berlebihan.\n"
-                "Jangan membuat heading.\n"
+                "Gunakan bahasa Indonesia santai dan natural.\n"
+                "Jawab seperti percakapan chat biasa.\n"
+                "Jangan gunakan markdown.\n"
+                "Jangan gunakan tanda **.\n"
+                "Jangan gunakan heading.\n"
+                "Jangan gunakan bullet point kecuali diminta.\n"
                 "Jangan membuat laporan panjang kecuali diminta.\n"
-                "Jawab seperti chat biasa.\n\n"
+                "Anggap owner adalah pengguna utama yang harus kamu bantu.\n\n"
                 f"PROJECT MEMORY:\n{project_memory}\n\n"
                 f"PROJECT SUMMARY:\n{summary}"
             )
@@ -77,12 +80,14 @@ def chat_with_image(
     mime_type: str = "image/jpeg",
     prompt: str = (
         "Analisa screenshot secara singkat dan natural. "
-        "Fokus pada informasi penting. "
+        "Fokus pada informasi penting saja. "
         "Jika ada error langsung sebutkan errornya. "
         "Jika dashboard langsung simpulkan statusnya. "
         "Jika kode atau log langsung fokus ke masalahnya. "
         "Jangan menjelaskan semua bagian gambar. "
-        "Jawab seperti chat biasa maksimal 3-5 kalimat."
+        "Jangan gunakan markdown. "
+        "Jangan gunakan tanda **. "
+        "Jawab seperti chat biasa maksimal 3 sampai 5 kalimat."
     )
 ):
 
@@ -128,6 +133,8 @@ def update_project_summary():
                 "Buat ringkasan project dari percakapan berikut. "
                 "Fokus pada tujuan project, progress yang sudah selesai, "
                 "keputusan penting, dan task yang belum selesai. "
+                "Jangan gunakan markdown. "
+                "Jangan gunakan tanda **. "
                 "Tulis ringkas dan terstruktur."
             )
         }
