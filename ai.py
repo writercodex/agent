@@ -7,7 +7,8 @@ from config import (
 
 from memory import (
     get_recent_messages,
-    get_summary
+    get_summary,
+    get_memory
 )
 
 client = OpenAI(
@@ -22,6 +23,13 @@ def chat_with_ai(message: str):
 
     summary = get_summary()
 
+    project_memory = get_memory(
+        "project_memory"
+    )
+
+    if not project_memory:
+        project_memory = "Belum ada project memory."
+
     messages = [
         {
             "role": "system",
@@ -29,6 +37,7 @@ def chat_with_ai(message: str):
                 "Kamu adalah asisten pribadi owner.\n"
                 "Jawab singkat, jelas, dan to the point.\n"
                 "Anggap owner adalah pengguna utama yang harus kamu bantu.\n\n"
+                f"PROJECT MEMORY:\n{project_memory}\n\n"
                 f"PROJECT SUMMARY:\n{summary}"
             )
         }
