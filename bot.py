@@ -22,6 +22,8 @@ from ai import (
     update_project_summary
 )
 
+MESSAGE_COUNT = 0
+
 
 async def ping(
     update: Update,
@@ -127,6 +129,8 @@ async def chat(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
+    global MESSAGE_COUNT
+
     if update.effective_user.id != OWNER_ID:
         return
 
@@ -136,6 +140,15 @@ async def chat(
         "user",
         user_message
     )
+
+    MESSAGE_COUNT += 1
+
+    if MESSAGE_COUNT >= 30:
+        try:
+            update_project_summary()
+            MESSAGE_COUNT = 0
+        except Exception as e:
+            print(f"Summary Error: {e}")
 
     reply = chat_with_ai(
         user_message
