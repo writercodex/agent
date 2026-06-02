@@ -73,6 +73,25 @@ def get_memory(key):
     return None
 
 
+def get_all_memories():
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT memory_key, memory_value
+    FROM memories
+    ORDER BY memory_key
+    """)
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return rows
+
+
 def save_message(role, content):
     conn = get_connection()
     cur = conn.cursor()
