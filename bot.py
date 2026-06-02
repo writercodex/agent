@@ -6,6 +6,7 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
+from telegram.constants import ChatAction
 
 import base64
 
@@ -135,8 +136,9 @@ async def photo_handler(
     if update.effective_user.id != OWNER_ID:
         return
 
-    await update.message.reply_text(
-        "Menganalisa gambar..."
+    await context.bot.send_chat_action(
+        chat_id=update.effective_chat.id,
+        action=ChatAction.TYPING
     )
 
     photo = update.message.photo[-1]
@@ -195,6 +197,11 @@ async def chat(
             MESSAGE_COUNT = 0
         except Exception as e:
             print(f"Summary Error: {e}")
+
+    await context.bot.send_chat_action(
+        chat_id=update.effective_chat.id,
+        action=ChatAction.TYPING
+    )
 
     reply = chat_with_ai(
         user_message
