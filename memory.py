@@ -53,6 +53,22 @@ def save_memory(key, value):
     conn.close()
 
 
+def delete_memory(key):
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "DELETE FROM memories WHERE memory_key=%s",
+        (key,)
+    )
+
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+
 def get_memory(key):
     conn = get_connection()
     cur = conn.cursor()
