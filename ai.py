@@ -21,6 +21,29 @@ client = OpenAI(
 )
 
 
+def clean_response(text):
+
+    if not text:
+        return ""
+
+    replacements = [
+        "**",
+        "__",
+        "###",
+        "##",
+        "#",
+        "```"
+    ]
+
+    for item in replacements:
+        text = text.replace(
+            item,
+            ""
+        )
+
+    return text.strip()
+
+
 def build_context():
 
     history = get_recent_messages(100)
@@ -46,14 +69,15 @@ def build_context():
             "role": "system",
             "content": (
                 "Kamu adalah asisten pribadi owner.\n"
-                "Jawab singkat, jelas, natural, dan to the point.\n"
-                "Gunakan bahasa Indonesia santai dan natural.\n"
-                "Jawab seperti percakapan chat biasa.\n"
-                "Jangan gunakan markdown.\n"
-                "Jangan gunakan tanda **.\n"
-                "Jangan gunakan heading.\n"
-                "Jangan gunakan bullet point kecuali diminta.\n"
+                "Gunakan bahasa Indonesia santai.\n"
+                "Jawab seperti chat Telegram biasa.\n"
+                "Jawab singkat, jelas dan natural.\n"
+                "Jangan menggunakan markdown.\n"
+                "Jangan menggunakan tanda **.\n"
+                "Jangan membuat heading.\n"
+                "Jangan membuat artikel.\n"
                 "Jangan membuat laporan panjang kecuali diminta.\n"
+                "Kalau pertanyaan sederhana jawab sederhana.\n"
                 "Anggap owner adalah pengguna utama yang harus kamu bantu.\n\n"
                 f"OWNER MEMORY:\n{memory_text}\n\n"
                 f"PROJECT MEMORY:\n{project_memory}\n\n"
@@ -77,7 +101,9 @@ def chat_with_ai(message: str):
         "search ",
         "cari ",
         "google ",
-        "berita "
+        "berita ",
+        "news ",
+        "terbaru "
     ]
 
     should_search = False
@@ -89,34 +115,25 @@ def chat_with_ai(message: str):
 
     if should_search:
 
-        try:
+        search_result = web_search(
+            message,
+            max_results=5
+        )
 
-            search_result = web_search(
-                message,
-                max_results=5
-            )
-
-            messages.append(
-                {
-                    "role": "system",
-                    "content": (
-                        "Gunakan hasil pencarian berikut "
-                        "untuk menjawab pertanyaan owner.\n\n"
-                        f"{search_result}"
-                    )
-                }
-            )
-
-        except Exception as e:
-
-            messages.append(
-                {
-                    "role": "system",
-                    "content": (
-                        f"Search error: {e}"
-                    )
-                }
-            )
+        messages.append(
+            {
+                "role": "system",
+                "content": (
+                    "Berikut hasil pencarian internet.\n"
+                    "Gunakan hasil ini untuk menjawab.\n"
+                    "Jangan membuat daftar panjang.\n"
+                    "Jangan membuat artikel.\n"
+                    "Ringkas hasil pencarian dalam gaya chat biasa.\n"
+                    "Jika hasil kosong atau error, katakan apa adanya.\n\n"
+                    f"{search_result}"
+                )
+            }
+        )
 
     messages.append(
         {
@@ -130,7 +147,11 @@ def chat_with_ai(message: str):
         messages=messages
     )
 
-    return response.choices[0].message.content
+    reply = response.choices[0].message.content
+
+    return clean_response(
+        reply
+    )
 
 
 def chat_with_image(
@@ -177,7 +198,11 @@ def chat_with_image(
         messages=messages
     )
 
-    return response.choices[0].message.content
+    reply = response.choices[0].message.content
+
+    return clean_response(
+        reply
+    )
 
 
 def update_project_summary():
@@ -207,6 +232,10 @@ def update_project_summary():
 
     summary = response.choices[0].message.content
 
-    save_summary(summary)
+    save_summary(
+        clean_response(summary)
+    )
 
-    return summary
+    return clean_response(
+        summary
+    )
