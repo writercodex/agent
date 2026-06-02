@@ -17,7 +17,10 @@ from memory import (
     get_summary
 )
 
-from ai import chat_with_ai
+from ai import (
+    chat_with_ai,
+    update_project_summary
+)
 
 
 async def ping(
@@ -102,6 +105,24 @@ async def memory(
     )
 
 
+async def updatesummary(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    if update.effective_user.id != OWNER_ID:
+        return
+
+    await update.message.reply_text(
+        "Membuat summary..."
+    )
+
+    summary = update_project_summary()
+
+    await update.message.reply_text(
+        f"Summary updated:\n\n{summary}"
+    )
+
+
 async def chat(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
@@ -150,6 +171,10 @@ app.add_handler(
 
 app.add_handler(
     CommandHandler("memory", memory)
+)
+
+app.add_handler(
+    CommandHandler("updatesummary", updatesummary)
 )
 
 app.add_handler(
