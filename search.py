@@ -1,16 +1,26 @@
 from duckduckgo_search import DDGS
 
 
-def web_search(query, max_results=5):
+def web_search(
+    query,
+    max_results=5
+):
 
     results_text = []
 
-    with DDGS() as ddgs:
+    try:
 
-        results = ddgs.text(
-            query,
-            max_results=max_results
-        )
+        with DDGS() as ddgs:
+
+            results = list(
+                ddgs.text(
+                    query,
+                    max_results=max_results
+                )
+            )
+
+        if not results:
+            return "SEARCH_EMPTY"
 
         for item in results:
 
@@ -24,17 +34,24 @@ def web_search(query, max_results=5):
                 ""
             )
 
-            href = item.get(
+            link = item.get(
                 "href",
-                ""
+                item.get(
+                    "link",
+                    ""
+                )
             )
 
             results_text.append(
                 f"Title: {title}\n"
                 f"Content: {body}\n"
-                f"URL: {href}"
+                f"URL: {link}"
             )
 
-    return "\n\n".join(
-        results_text
-    )
+        return "\n\n".join(
+            results_text
+        )
+
+    except Exception as e:
+
+        return f"SEARCH_ERROR: {e}"
