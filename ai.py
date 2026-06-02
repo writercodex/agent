@@ -14,6 +14,9 @@ from memory import (
 )
 
 from tools.search import web_search
+from tools.url_reader import read_url
+
+import re
 
 client = OpenAI(
     api_key=MIMO_API_KEY,
@@ -97,43 +100,72 @@ def chat_with_ai(message: str):
 
     lower_message = message.lower()
 
-    search_triggers = [
-        "search ",
-        "cari ",
-        "google ",
-        "berita ",
-        "news ",
-        "terbaru "
-    ]
+    url_match = re.search(
+        r'https?://\S+',
+        message
+    )
 
-    should_search = False
+    if url_match:
 
-    for trigger in search_triggers:
-        if lower_message.startswith(trigger):
-            should_search = True
-            break
+        url = url_match.group(0)
 
-    if should_search:
-
-        search_result = web_search(
-            message,
-            max_results=5
+        url_content = read_url(
+            url
         )
 
         messages.append(
             {
                 "role": "system",
                 "content": (
-                    "Berikut hasil pencarian internet.\n"
-                    "Gunakan hasil ini untuk menjawab.\n"
-                    "Jangan membuat daftar panjang.\n"
-                    "Jangan membuat artikel.\n"
-                    "Ringkas hasil pencarian dalam gaya chat biasa.\n"
-                    "Jika hasil kosong atau error, katakan apa adanya.\n\n"
-                    f"{search_result}"
+                    "Berikut isi website yang diminta owner.\n"
+                    "Ringkas isi website secara singkat.\n"
+                    "Fokus pada informasi penting.\n"
+                    "Jawab seperti chat biasa.\n"
+                    "Jangan gunakan markdown.\n\n"
+                    f"{url_content}"
                 )
             }
         )
+
+    else:
+
+        search_triggers = [
+            "search ",
+            "cari ",
+            "google ",
+            "berita ",
+            "news ",
+            "terbaru "
+        ]
+
+        should_search = False
+
+        for trigger in search_triggers:
+            if lower_message.startswith(trigger):
+                should_search = True
+                break
+
+        if should_search:
+
+            search_result = web_search(
+                message,
+                max_results=5
+            )
+
+            messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        "Berikut hasil pencarian internet.\n"
+                        "Gunakan hasil ini untuk menjawab.\n"
+                        "Jangan membuat daftar panjang.\n"
+                        "Jangan membuat artikel.\n"
+                        "Ringkas hasil pencarian dalam gaya chat biasa.\n"
+                        "Jika hasil kosong atau error, katakan apa adanya.\n\n"
+                        f"{search_result}"
+                    )
+                }
+            )
 
     messages.append(
         {
