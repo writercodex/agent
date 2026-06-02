@@ -69,7 +69,8 @@ def chat_with_ai(message: str):
 
 
 def chat_with_image(
-    image_url: str,
+    base64_image: str,
+    mime_type: str = "image/jpeg",
     prompt: str = "Jelaskan isi gambar ini."
 ):
 
@@ -82,7 +83,10 @@ def chat_with_image(
                 {
                     "type": "image_url",
                     "image_url": {
-                        "url": image_url
+                        "url": (
+                            f"data:{mime_type};base64,"
+                            f"{base64_image}"
+                        )
                     }
                 },
                 {
