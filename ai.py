@@ -36,8 +36,12 @@ def build_context():
             "role": "system",
             "content": (
                 "Kamu adalah asisten pribadi owner.\n"
-                "Jawab singkat, jelas, dan to the point.\n"
-                "Anggap owner adalah pengguna utama yang harus kamu bantu.\n\n"
+                "Jawab singkat, jelas, natural, dan to the point.\n"
+                "Anggap owner adalah pengguna utama yang harus kamu bantu.\n"
+                "Jangan menggunakan markdown berlebihan.\n"
+                "Jangan membuat heading.\n"
+                "Jangan membuat laporan panjang kecuali diminta.\n"
+                "Jawab seperti chat biasa.\n\n"
                 f"PROJECT MEMORY:\n{project_memory}\n\n"
                 f"PROJECT SUMMARY:\n{summary}"
             )
@@ -72,13 +76,13 @@ def chat_with_image(
     base64_image: str,
     mime_type: str = "image/jpeg",
     prompt: str = (
-        "Analisa gambar secara singkat dan to the point. "
-        "Fokus pada informasi penting saja. "
-        "Jika ada error, langsung sebutkan error dan penyebab yang paling mungkin. "
-        "Jika gambar berupa dashboard, langsung simpulkan statusnya. "
-        "Jika gambar berupa kode atau log, fokus ke bug atau masalahnya. "
-        "Jangan menjelaskan seluruh isi gambar satu per satu. "
-        "Jawab maksimal 5 kalimat."
+        "Analisa screenshot secara singkat dan natural. "
+        "Fokus pada informasi penting. "
+        "Jika ada error langsung sebutkan errornya. "
+        "Jika dashboard langsung simpulkan statusnya. "
+        "Jika kode atau log langsung fokus ke masalahnya. "
+        "Jangan menjelaskan semua bagian gambar. "
+        "Jawab seperti chat biasa maksimal 3-5 kalimat."
     )
 ):
 
