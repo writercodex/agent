@@ -9,6 +9,7 @@ from telegram.ext import (
 from telegram.constants import ChatAction
 
 import base64
+import time
 
 from config import TELEGRAM_TOKEN, OWNER_ID
 
@@ -183,6 +184,32 @@ async def chat(
         return
 
     user_message = update.message.text
+
+    lower_message = user_message.lower()
+
+    memory_triggers = [
+        "ingat ",
+        "ingatlah ",
+        "tolong ingat ",
+        "simpan ",
+        "catat ",
+        "remember "
+    ]
+
+    for trigger in memory_triggers:
+
+        if lower_message.startswith(trigger):
+
+            save_memory(
+                f"memory_{int(time.time())}",
+                user_message
+            )
+
+            await update.message.reply_text(
+                "Oke, saya ingat itu."
+            )
+
+            return
 
     save_message(
         "user",
