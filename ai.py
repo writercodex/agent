@@ -18,7 +18,7 @@ client = OpenAI(
 )
 
 
-def chat_with_ai(message: str):
+def build_context():
 
     history = get_recent_messages(100)
 
@@ -46,6 +46,13 @@ def chat_with_ai(message: str):
 
     messages.extend(history)
 
+    return messages
+
+
+def chat_with_ai(message: str):
+
+    messages = build_context()
+
     messages.append(
         {
             "role": "user",
@@ -55,6 +62,39 @@ def chat_with_ai(message: str):
 
     response = client.chat.completions.create(
         model="mimo-v2.5-pro",
+        messages=messages
+    )
+
+    return response.choices[0].message.content
+
+
+def chat_with_image(
+    image_url: str,
+    prompt: str = "Jelaskan isi gambar ini."
+):
+
+    messages = build_context()
+
+    messages.append(
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": image_url
+                    }
+                },
+                {
+                    "type": "text",
+                    "text": prompt
+                }
+            ]
+        }
+    )
+
+    response = client.chat.completions.create(
+        model="mimo-v2-omni",
         messages=messages
     )
 
