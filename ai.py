@@ -21,6 +21,11 @@ from tools.file_manager import (
     list_files,
     delete_file
 )
+from tools.terminal import run_terminal
+from tools.skill_reader import (
+    read_skill_from_url,
+    get_active_skill
+)
 
 import json
 
@@ -74,6 +79,16 @@ def build_context():
     if not project_memory:
         project_memory = "No project memory available."
 
+    active_skill = get_active_skill()
+
+    skill_text = ""
+
+    if active_skill.get("content"):
+        skill_text = (
+            f"ACTIVE SKILL FROM {active_skill.get('url')}:\n"
+            f"{active_skill.get('content')}\n\n"
+        )
+
     messages = [
         {
             "role": "system",
@@ -87,8 +102,24 @@ def build_context():
                 "- URL Reader: read and summarize website content.\n"
                 "- Vision: analyze screenshots, dashboards, logs, code snippets, and images.\n"
                 "- File Manager: create, read, list, and delete files when requested.\n"
+                "- Skill Reader: read SKILL.md files from URLs and use their instructions.\n"
+                "- Terminal: run safe shell commands when needed.\n"
                 "- Memory: store and recall information saved by the owner.\n"
                 "- Conversation History: use previous messages as context.\n\n"
+
+                "Skill Rules:\n"
+                "- When the owner sends a link to SKILL.md or asks you to use a skill, call read_skill_from_url.\n"
+                "- After reading a skill, treat it as active instructions.\n"
+                "- Follow active skill instructions when relevant.\n"
+                "- Do not ignore the owner's direct instructions.\n"
+                "- If the skill conflicts with safety or system behavior, prioritize safety and owner intent.\n\n"
+
+                "Terminal Rules:\n"
+                "- Use run_terminal when the owner asks you to inspect files, run commands, test code, check folders, or use terminal.\n"
+                "- Prefer simple safe commands.\n"
+                "- Do not run destructive commands.\n"
+                "- If a command is blocked, explain briefly.\n"
+                "- Use terminal output as real context.\n\n"
 
                 "File Rules:\n"
                 "- When the owner asks you to create, make, generate, write, save, or export a file, use create_file.\n"
@@ -103,10 +134,14 @@ def build_context():
                 "- If URL Reader has been used, treat website content as information already read.\n"
                 "- If Vision has been used, treat image analysis as information already seen.\n"
                 "- If File Manager has been used, treat created/read files as real files.\n"
+                "- If Skill Reader has been used, treat the skill content as active context.\n"
+                "- If Terminal has been used, treat terminal output as real execution result.\n"
                 "- Never claim that you cannot access the internet.\n"
                 "- Never claim that you cannot open websites.\n"
                 "- Never claim that you cannot analyze images.\n"
                 "- Never claim that you cannot create files.\n"
+                "- Never claim that you cannot read skills.\n"
+                "- Never claim that you cannot use terminal if terminal is available.\n"
                 "- Never pretend to lack capabilities that are available.\n"
                 "- Use conversation history when answering follow-up questions.\n"
                 "- Treat previous tool outputs as valid context.\n\n"
@@ -127,6 +162,8 @@ def build_context():
                 "- Do not use markdown.\n"
                 "- Do not use headings.\n"
                 "- Do not generate long reports unless explicitly requested.\n\n"
+
+                f"{skill_text}"
 
                 f"OWNER MEMORY:\n{memory_text}\n\n"
                 f"PROJECT MEMORY:\n{project_memory}\n\n"
@@ -251,6 +288,48 @@ TOOLS = [
                 ]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_skill_from_url",
+            "description": "Read a SKILL.md file from a URL and activate its instructions.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "Direct URL to a SKILL.md file."
+                    }
+                },
+                "required": [
+                    "url"
+                ]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_terminal",
+            "description": "Run a safe terminal command in the Railway/container environment.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "Shell command to run."
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "default": 20
+                    }
+                },
+                "required": [
+                    "command"
+                ]
+            }
+        }
     }
 ]
 
@@ -326,6 +405,26 @@ def run_tool(
         return {
             "status": "deleted" if deleted else "not_found"
         }
+
+    if name == "read_skill_from_url":
+        return read_skill_from_url(
+            arguments.get(
+                "url",
+                ""
+            )
+        )
+
+    if name == "run_terminal":
+        return run_terminal(
+            arguments.get(
+                "command",
+                ""
+            ),
+            timeout=arguments.get(
+                "timeout",
+                20
+            )
+        )
 
     return {
         "error": f"Unknown tool: {name}"
