@@ -9,6 +9,7 @@ from telegram.ext import (
 from telegram.constants import ChatAction
 
 import base64
+import os
 import time
 
 from config import TELEGRAM_TOKEN, OWNER_ID
@@ -279,9 +280,27 @@ async def chat(
         action=ChatAction.TYPING
     )
 
-    reply = chat_with_ai(
+    result = chat_with_ai(
         user_message
     )
+
+    if isinstance(
+        result,
+        dict
+    ):
+        reply = result.get(
+            "text",
+            "Selesai."
+        )
+
+        files = result.get(
+            "files",
+            []
+        )
+
+    else:
+        reply = result
+        files = []
 
     save_message(
         "assistant",
@@ -291,6 +310,24 @@ async def chat(
     await update.message.reply_text(
         reply
     )
+
+    for file_path in files:
+
+        if os.path.exists(
+            file_path
+        ):
+
+            with open(
+                file_path,
+                "rb"
+            ) as document:
+
+                await update.message.reply_document(
+                    document=document,
+                    filename=os.path.basename(
+                        file_path
+                    )
+                )
 
 
 init_db()
