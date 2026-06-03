@@ -10,12 +10,28 @@ GENERATED_DIR.mkdir(
 )
 
 
+def safe_path(filename):
+
+    filename = str(filename).strip().replace("\\", "/")
+
+    if not filename:
+        filename = "output.txt"
+
+    filepath = (GENERATED_DIR / filename).resolve()
+    base = GENERATED_DIR.resolve()
+
+    if base not in filepath.parents and filepath != base:
+        raise ValueError("Invalid filename")
+
+    return filepath
+
+
 def create_file(
     filename,
     content
 ):
 
-    filepath = GENERATED_DIR / filename
+    filepath = safe_path(filename)
 
     filepath.parent.mkdir(
         parents=True,
@@ -38,7 +54,7 @@ def read_file(
     filename
 ):
 
-    filepath = GENERATED_DIR / filename
+    filepath = safe_path(filename)
 
     if not filepath.exists():
         return None
@@ -64,7 +80,7 @@ def delete_file(
     filename
 ):
 
-    filepath = GENERATED_DIR / filename
+    filepath = safe_path(filename)
 
     if not filepath.exists():
         return False
