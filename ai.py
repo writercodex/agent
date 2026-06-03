@@ -15,8 +15,15 @@ from memory import (
 
 from tools.search import web_search
 from tools.url_reader import read_url
+from tools.file_manager import (
+    create_file,
+    read_file,
+    list_files,
+    delete_file
+)
 
-import re
+import json
+
 
 client = OpenAI(
     api_key=MIMO_API_KEY,
@@ -79,16 +86,27 @@ def build_context():
                 "- Web Search: search and retrieve information from the internet.\n"
                 "- URL Reader: read and summarize website content.\n"
                 "- Vision: analyze screenshots, dashboards, logs, code snippets, and images.\n"
+                "- File Manager: create, read, list, and delete files when requested.\n"
                 "- Memory: store and recall information saved by the owner.\n"
                 "- Conversation History: use previous messages as context.\n\n"
+
+                "File Rules:\n"
+                "- When the owner asks you to create, make, generate, write, save, or export a file, use create_file.\n"
+                "- Do not only describe the file. Actually call the file tool.\n"
+                "- Use the filename requested by the owner.\n"
+                "- If no filename is provided, choose a clear filename with the right extension.\n"
+                "- For text files use .txt, markdown use .md, HTML use .html, CSV use .csv, JSON use .json, Python use .py.\n"
+                "- Put the complete final content inside the file.\n\n"
 
                 "Tool Awareness Rules:\n"
                 "- If Web Search has been used, treat search results as valid information.\n"
                 "- If URL Reader has been used, treat website content as information already read.\n"
                 "- If Vision has been used, treat image analysis as information already seen.\n"
+                "- If File Manager has been used, treat created/read files as real files.\n"
                 "- Never claim that you cannot access the internet.\n"
                 "- Never claim that you cannot open websites.\n"
                 "- Never claim that you cannot analyze images.\n"
+                "- Never claim that you cannot create files.\n"
                 "- Never pretend to lack capabilities that are available.\n"
                 "- Use conversation history when answering follow-up questions.\n"
                 "- Treat previous tool outputs as valid context.\n\n"
@@ -122,80 +140,203 @@ def build_context():
     return messages
 
 
-def chat_with_ai(message: str):
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Search the web for current information.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "default": 5
+                    }
+                },
+                "required": [
+                    "query"
+                ]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_url",
+            "description": "Read and extract text content from a URL.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url"
+                ]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_file",
+            "description": "Create a file with the exact filename and content requested by the owner.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "File name including extension, e.g. notes.txt, report.md, index.html, data.csv"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Complete file content to write."
+                    }
+                },
+                "required": [
+                    "filename",
+                    "content"
+                ]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read a previously generated file.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "filename"
+                ]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_files",
+            "description": "List generated files.",
+            "parameters": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_file",
+            "description": "Delete a previously generated file.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "filename"
+                ]
+            }
+        }
+    }
+]
+
+
+def run_tool(
+    name,
+    arguments
+):
+
+    if name == "web_search":
+        return web_search(
+            arguments.get(
+                "query",
+                ""
+            ),
+            max_results=arguments.get(
+                "max_results",
+                5
+            )
+        )
+
+    if name == "read_url":
+        return read_url(
+            arguments.get(
+                "url",
+                ""
+            )
+        )
+
+    if name == "create_file":
+        path = create_file(
+            arguments.get(
+                "filename",
+                "output.txt"
+            ),
+            arguments.get(
+                "content",
+                ""
+            )
+        )
+
+        return {
+            "status": "created",
+            "path": path
+        }
+
+    if name == "read_file":
+        content = read_file(
+            arguments.get(
+                "filename",
+                ""
+            )
+        )
+
+        return {
+            "status": "found" if content is not None else "not_found",
+            "content": content
+        }
+
+    if name == "list_files":
+        return {
+            "files": list_files()
+        }
+
+    if name == "delete_file":
+        deleted = delete_file(
+            arguments.get(
+                "filename",
+                ""
+            )
+        )
+
+        return {
+            "status": "deleted" if deleted else "not_found"
+        }
+
+    return {
+        "error": f"Unknown tool: {name}"
+    }
+
+
+def chat_with_ai(
+    message: str
+):
 
     messages = build_context()
-
-    lower_message = message.lower()
-
-    url_match = re.search(
-        r'https?://\S+',
-        message
-    )
-
-    if url_match:
-
-        url = url_match.group(0)
-
-        url_content = read_url(
-            url
-        )
-
-        messages.append(
-            {
-                "role": "system",
-                "content": (
-                    "The owner requested website analysis.\n"
-                    "The following content was successfully retrieved "
-                    "using URL Reader.\n"
-                    "Treat this content as valid information.\n"
-                    "Summarize the important points.\n"
-                    "Reply in Indonesian.\n"
-                    "Do not use markdown.\n\n"
-                    f"{url_content}"
-                )
-            }
-        )
-
-    else:
-
-        search_triggers = [
-            "search ",
-            "cari ",
-            "google ",
-            "berita ",
-            "news ",
-            "terbaru "
-        ]
-
-        should_search = False
-
-        for trigger in search_triggers:
-            if lower_message.startswith(trigger):
-                should_search = True
-                break
-
-        if should_search:
-
-            search_result = web_search(
-                message,
-                max_results=5
-            )
-
-            messages.append(
-                {
-                    "role": "system",
-                    "content": (
-                        "The following information was retrieved "
-                        "using Web Search.\n"
-                        "Treat the search result as valid information.\n"
-                        "Reply in Indonesian.\n"
-                        "Keep the answer concise.\n"
-                        "Do not use markdown.\n\n"
-                        f"{search_result}"
-                    )
-                }
-            )
 
     messages.append(
         {
@@ -204,16 +345,123 @@ def chat_with_ai(message: str):
         }
     )
 
-    response = client.chat.completions.create(
-        model="mimo-v2.5-pro",
-        messages=messages
+    created_files = []
+
+    try:
+        response = client.chat.completions.create(
+            model="mimo-v2.5-pro",
+            messages=messages,
+            tools=TOOLS,
+            tool_choice="auto"
+        )
+
+    except Exception:
+        response = client.chat.completions.create(
+            model="mimo-v2.5-pro",
+            messages=messages
+        )
+
+        reply = response.choices[0].message.content
+
+        return {
+            "text": clean_response(
+                reply
+            ),
+            "files": []
+        }
+
+    assistant_message = response.choices[0].message
+
+    tool_calls = getattr(
+        assistant_message,
+        "tool_calls",
+        None
     )
 
-    reply = response.choices[0].message.content
+    loops = 0
 
-    return clean_response(
-        reply
-    )
+    while tool_calls and loops < 5:
+
+        loops += 1
+
+        messages.append(
+            assistant_message
+        )
+
+        for tool_call in tool_calls:
+
+            name = tool_call.function.name
+
+            try:
+                arguments = json.loads(
+                    tool_call.function.arguments or "{}"
+                )
+
+            except Exception:
+                arguments = {}
+
+            result = run_tool(
+                name,
+                arguments
+            )
+
+            if name == "create_file" and isinstance(
+                result,
+                dict
+            ):
+
+                path = result.get(
+                    "path"
+                )
+
+                if path:
+                    created_files.append(
+                        path
+                    )
+
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": json.dumps(
+                        result,
+                        ensure_ascii=False
+                    )
+                }
+            )
+
+        response = client.chat.completions.create(
+            model="mimo-v2.5-pro",
+            messages=messages,
+            tools=TOOLS,
+            tool_choice="auto"
+        )
+
+        assistant_message = response.choices[0].message
+
+        tool_calls = getattr(
+            assistant_message,
+            "tool_calls",
+            None
+        )
+
+    reply = assistant_message.content or "Selesai."
+
+    if created_files:
+
+        reply = clean_response(
+            reply
+        )
+
+        if "file" not in reply.lower():
+            reply = f"File berhasil dibuat: {', '.join(created_files)}"
+
+    return {
+        "text": clean_response(
+            reply
+        ),
+        "files": created_files
+    }
 
 
 def chat_with_image(
